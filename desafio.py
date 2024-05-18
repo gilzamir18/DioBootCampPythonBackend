@@ -5,6 +5,19 @@ from __future__ import annotations
 import time
 import os
 import abc
+import datetime
+import functools
+
+
+def logger_dated(op):
+    @functools.wraps
+    def log(func):
+        def wrapper(*args, **kargs):
+            retunred_value = func(*args, **kargs)
+            print(f"Operação {op} foi realizada em {datetime.datetime.now()}!")
+            return retunred_value
+        return wrapper
+    return log
 
 class Historico:
     """
@@ -25,6 +38,15 @@ class Historico:
         Retorna todas as transações já realizadas.
         """
         return self._transacoes
+    
+    
+    def gerar_relatorio(self, tipo_transacao = None):
+        """
+        Gera um relatório de transações de acordo com o tipo de transação.
+        """
+        for transacao in self.transacoes:
+            if not tipo_transacao or isinstance(transacao, tipo_transacao):
+                yield transacao
 
 class Conta:
     """
@@ -77,6 +99,7 @@ class Conta:
         nova_conta = Conta(cliente, numero)
         return nova_conta
 
+    @logger_dated("Saque")
     def sacar(self, valor: float):
         """
         Retira o saldo conforme valor.
@@ -87,12 +110,31 @@ class Conta:
         else:
             return False
 
+    @logger_dated("Depósito")
     def depositar(self, valor: float):
         """
         Adiciona no saldo conforme valor.
         """
         self._saldo += valor
         return True
+
+
+class ContaIterador:
+    def __init__(self, contas):
+        self._contas = contas
+        self._next = 0
+    
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if (self._next < len(self._contas)):
+            conta = self._contas[self._next]
+            self._next += 1
+            return conta
+        else:
+            raise StopIteration
 
 class Transacao(abc.ABC):
     """
@@ -198,7 +240,8 @@ class ContaCorrente(Conta):
             return super().depositar(valor)
         else:
             return False
-
+    def __str__(self):
+        return f"Conta Corrente\n Nº {self.numero},\n Agência: {self.agencia}, \n Cliente: {self.cliente.nome},\n Saldo: {self.saldo}"
 
 class PessoaFisica(Cliente):
     """
@@ -242,13 +285,31 @@ def limpar_terminal():
 
 def exibir_extrato(conta):
     extrato = []
-    for transaco in conta.historico.transacoes:
+    tipo_transacao = None
+    while True:
+        tipo = input("Tipo de transação (todas = a, Depósitos = d, Saques = s): ")
+        if tipo == "d":
+            tipo_transacao = Deposito
+            break
+        elif tipo == "s":
+            tipo_transacao = Saque
+            break
+        elif tipo == "a":
+            break
+        else:
+            print("Tipo de transação inválido! Tente novamente!!!")
+
+    for transaco in conta.historico.gerar_relatorio(tipo_transacao):
         extrato.append(f"Operação de {transaco.__class__.__name__} no valor de {transaco.valor}")
 
     extrato = "\n".join(extrato)
 
     print("\n================ EXTRATO ================")
-    print("Não foram realizadas movimentações." if not extrato else extrato)
+    
+    if tipo_transacao:
+        print("Não foram realizadas movimentações do tipo informado." if not extrato else extrato)
+    else:
+        print("Não foram realizadas movimentações." if not extrato else extrato)
     print(f"\nSaldo: R$ {conta.saldo:.2f}")
     print("==========================================")
 
@@ -275,6 +336,7 @@ def criar_conta(usuarios):
         novaconta = ContaCorrente(usuario[0], numero, limite, 2)
         usuario[0].adicionar_conta(novaconta)
         print("\n@@@ Conta criada com sucesso! @@@")
+        print("\n@@@ NÚMERO DA CONTA ", numero, " @@@")
     else:
         print("\n@@@ Usuário não encontrado, fluxo de criação da conta encerrado! @@@")
 
@@ -283,11 +345,13 @@ def listar_contas(usuario):
     print('LISTA DE CONTAS ATIVAS'.center(50, '*'))
     print(''.center(50, '*'))
     if usuario.tem_conta():
-        for conta in usuario.contas:
-            print("NÚMERO: ", conta.numero)
-            print("AGÊNCIA: ", conta.agencia)
-            print("USUARIO: ", conta.cliente.nome, '(CPF: ', conta.cliente.cpf, ')')
-            print("STATUS: ", 'ATIVA' if conta.ativa else 'INATIVA')
+        iterador_contas = ContaIterador(usuario.contas)
+        for conta in iterador_contas:
+            #print("NÚMERO: ", conta.numero)
+            #print("AGÊNCIA: ", conta.agencia)
+            #print("USUARIO: ", conta.cliente.nome, '(CPF: ', conta.cliente.cpf, ')')
+            #print("STATUS: ", 'ATIVA' if conta.ativa else 'INATIVA')
+            print(conta)
     else:
         print(f"O usuário identificado com o CPF {usuario.cpf} não tem contas")
     print(''.center(50, '*'))

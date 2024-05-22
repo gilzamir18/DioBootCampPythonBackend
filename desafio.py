@@ -64,7 +64,7 @@ class Conta:
         self._cliente = cliente
         self._historico = Historico()
         self._ativa = True
-  
+
     @property
     def ativa(self):
         return self._ativa
@@ -122,6 +122,14 @@ class Conta:
         self._saldo += valor
         return True
 
+    def __str__(self) -> str:
+        return f"""
+                Número da Conta: {self._numero}
+                Saldo da Conta: {self._saldo}
+                """
+    
+    def __repr__(self):
+        return f"Conta({self._cliente, self._numero})"
 
 class ContaIterador:
     def __init__(self, contas):
@@ -179,6 +187,12 @@ class Deposito(Transacao):
             return True
         else:
             return False
+    
+    def __str__(self):
+        return f"Depósito de {self._valor}"
+    
+    def __repr__(self):
+        return f"Deposito({self._valor})"
 
 class Saque(Transacao):
     """
@@ -198,6 +212,11 @@ class Saque(Transacao):
             return True
         else:
             return False
+    def __repr__(self):
+        return f"Saque({self._valor})"
+    
+    def __str__(self):
+        return f"Saque de {self._valor}"
 
 
 class Cliente:
@@ -217,6 +236,13 @@ class Cliente:
     @property
     def contas(self):
         return self._contas
+
+    def __repr__(self):
+        return f"Cliente(self._endereco)"
+    
+    def __str__(self):
+        return f"Cliente com endereco {self._endereco}"
+
 
 class ContaCorrente(Conta):
     def __init__(self, cliente: Cliente, numero: int, limite: float, limite_saques: float):
@@ -246,6 +272,9 @@ class ContaCorrente(Conta):
             return False
     def __str__(self):
         return f"Conta Corrente\n Nº {self.numero},\n Agência: {self.agencia}, \n Cliente: {self.cliente.nome},\n Saldo: {self.saldo}"
+
+    def __repr__(self):
+        return f"ContaCorrente({self._cliente}, {self._limite}, {self._limite_saques})"
 
 class PessoaFisica(Cliente):
     """
@@ -277,6 +306,14 @@ class PessoaFisica(Cliente):
         Retorna a data de nascimento.
         """
         return self._data_nascimento
+    
+    def __str__(self):
+        return    f"""
+                    Endereço: {self._endereco}, 
+                    CPF: {self._cpf},
+                    Nome: {self._nome},
+                    Data Nasc:  {self._data_nascimento}
+                    """
 
 def limpar_terminal():
     """

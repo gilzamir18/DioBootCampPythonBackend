@@ -1,0 +1,2 @@
+[2024-05-22 18:28:27] Função 'criar_usuario' executada com argumentos ([<__main__.PessoaFisica object at 0x755941d54ec0>],) e {}.Retornou None
+[2024-05-22 18:28:38] Função 'criar_conta' executada com argumentos ([<__main__.PessoaFisica object at 0x755941d54ec0>],) e {}.Retornou None

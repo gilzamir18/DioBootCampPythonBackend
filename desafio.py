@@ -7,17 +7,21 @@ import os
 import abc
 import datetime
 import functools
+from pathlib import Path
+
+ROOT_PATH = Path(__file__).parent
 
 
-def logger_dated(op):
-    @functools.wraps
-    def log(func):
-        def wrapper(*args, **kargs):
-            retunred_value = func(*args, **kargs)
-            print(f"Operação {op} foi realizada em {datetime.datetime.now()}!")
-            return retunred_value
-        return wrapper
-    return log
+def log_transacao(func):
+    def wrapper(*args, **kargs):
+        result = func(*args, **kargs)
+        data_hora = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
+        with open(ROOT_PATH / "log.txt", 'a') as f:
+            f.write(f"[{data_hora}] Função '{func.__name__}' executada com argumentos {args} e {kargs}." 
+                        f"Retornou {result}\n")
+        return result
+    return wrapper
+
 
 class Historico:
     """
@@ -99,7 +103,7 @@ class Conta:
         nova_conta = Conta(cliente, numero)
         return nova_conta
 
-    @logger_dated("Saque")
+    @log_transacao
     def sacar(self, valor: float):
         """
         Retira o saldo conforme valor.
@@ -110,7 +114,7 @@ class Conta:
         else:
             return False
 
-    @logger_dated("Depósito")
+    @log_transacao
     def depositar(self, valor: float):
         """
         Adiciona no saldo conforme valor.
@@ -313,6 +317,7 @@ def exibir_extrato(conta):
     print(f"\nSaldo: R$ {conta.saldo:.2f}")
     print("==========================================")
 
+@log_transacao
 def criar_usuario(usuarios):
     #nome, dt_nascimento, cpf, endereco
     cpf = input("CPF do novo usuário (somente números): ")
@@ -327,6 +332,7 @@ def criar_usuario(usuarios):
     usuarios.append(PessoaFisica(endereco=endereco, cpf=cpf, nome=nome, data_nascimento=data_nascimento))
     print("@@@ Usuário criado com sucesso! @@@")
 
+@log_transacao
 def criar_conta(usuarios):
     cpf = input("Informe o CPF do usuário para o qual a conta será criada: ")
     usuario = [u for u in usuarios if u.cpf == cpf]
